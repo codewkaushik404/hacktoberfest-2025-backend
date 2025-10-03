@@ -7,6 +7,11 @@ const usageTipsSchema = new mongoose.Schema({
 }, { _id: false });
 
 const productSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
   name: { type: String, required: true },
   price: { type: Number, required: true },
   category: { type: String },
