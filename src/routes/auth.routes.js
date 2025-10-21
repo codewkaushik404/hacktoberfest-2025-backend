@@ -11,14 +11,21 @@ import {
 } from '../controllers/auth.controller.js';
 // use centralized middleware that validates tokenVersion and expiry
 import { authenticateToken } from '../middleware/auth.middleware.js';
+import { generalRateLimit } from '../middleware/rateLimiter.middleware.js';
 
 const router = express.Router();
 
+// MAX 10 requests from the same IP in a span of 1 Minute
+const loginRateLimit = generalRateLimit(2,1);
+
+// MAX 3 requests from the same IP in a span of 1 Hour
+const registerRateLimit = generalRateLimit(3,60);
+
 //Passport-local routes
 //login
-router.post('/login',login);
+router.post('/login',loginRateLimit, login);
 //register
-router.post('/signup',signUp);
+router.post('/signup',registerRateLimit, signUp);
 
 // Google OAuth routes
 router.get('/google', googleAuth);
