@@ -2,6 +2,7 @@ import passport from '../config/passport.config.js';
 import User from '../models/user.model.js';
 import { generateToken } from '../config/passport.config.js';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 // Redirect to Google OAuth (generates a per-request state stored in an httpOnly cookie)
 export const googleAuth = (req, res, next) => {
@@ -123,3 +124,70 @@ export const refreshToken = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to refresh token' });
   }
 };
+
+export const login = (req,res,next)=>{
+  passport.authenticate('local',{session: false}, async(err,user,info)=>{
+    if(err){
+      return res.status(500).json({message: info?.message || "Server side error"});
+    }
+    if(!user && info?.message === "Invalid credentials"){
+      return res.status(401).json({message: info?.message});
+    }
+    else if(!user){
+      return res.status(404).json({message: info?.message || "User not found"});
+    }
+
+    const userDetails = await User.findById(user._id);
+    const {email, firstName, lastName} = userDetails;
+    const token = generateToken(userDetails);
+
+    return res.status(200).json({
+      message:info?.message,
+      userDetails: {
+        email,
+        firstName,
+        lastName
+      },
+      Token: token
+    });
+  })(req,res,next);
+}
+
+export const signUp = async(req,res,next)=>{
+  const {email, name, firstName, lastName, password}  =req.body;
+  console.log(email,name,firstName,lastName);
+  if(!email || !name || !firstName ||!lastName || !password){
+    next(new Error("Required Details are missing"));
+  }
+  try{
+
+    const user = await User.findOne({
+      $or: [{email},{name}]
+    });
+
+    if(user){
+      throw new Error("User with email or name already exists");
+    }
+
+    const hashedPassword = await bcrypt.hash(password,12);
+    const data = {
+      ...req.body,
+      password: hashedPassword
+    }
+    
+    await User.create(data);
+    res.status(201).json({
+      message: "User signed up successfully",
+      userDetail: {
+        "UserName": name,
+        "Email-ID": email,
+        "First Name": firstName,
+        "Last Name": lastName
+      }
+    });
+
+  }catch(err){
+    next(err);
+  }
+ 
+}

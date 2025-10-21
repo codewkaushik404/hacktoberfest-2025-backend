@@ -4,12 +4,16 @@ const GoogleStrategy = pkg.Strategy || pkg;
 import User from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
 import { sendPendingLinkEmail } from '../utils/email.util.js';
+import { Strategy as LocalStrategy } from 'passport-local';
+import bcrypt from 'bcryptjs';
 
 // helper to generate JWT (used by controller as well)
 export const generateToken = (user) => {
   const payload = {
     userId: user._id,
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     authProvider: user.authProvider,
     tokenVersion: user.tokenVersion || 0 
   };
@@ -27,6 +31,7 @@ for (const k of requiredEnvs) {
 // JWT secret strength check
 const jwtSecret = process.env.JWT_SECRET || '';
 if (process.env.NODE_ENV !== 'test') {
+  
   // require at least 32 bytes (64 hex chars) for HMAC secrets
   if (typeof jwtSecret !== 'string' || jwtSecret.length < 64) {
     const genCmd = `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`;
@@ -34,8 +39,9 @@ if (process.env.NODE_ENV !== 'test') {
   }
   // optional: ensure it's not a default placeholder
   if (/replace_|your_|changeme/i.test(jwtSecret)) {
-    throw new Error('JWT_SECRET appears to be a placeholder. Replace it with a secure random value.');
+    throw new Error("JWT_SECRET appears to be a placeholder. Replace it with a secure random value.");
   }
+
 }
 
 
@@ -98,5 +104,26 @@ passport.use(new GoogleStrategy({
   }
 }));
 
+passport.use(new LocalStrategy(
+  { usernameField: 'email'},
+  async (email,password,done)=>{
+    try{
+      const user = await User.findOne({email});
+
+      if(!user){
+        return done(null,false,{message: "User not found"});
+      }
+
+      if(!await bcrypt.compare(password, user.password)){
+        return done(null,false,{message: "Invalid credentials"});
+      }
+      return done(null,user,{message: "User authenticated successfully"});
+
+    }catch(err){
+      console.error("Server Error",err);
+      return done(err);
+    }
+  }
+))
 // leave default passport export only
 export default passport;

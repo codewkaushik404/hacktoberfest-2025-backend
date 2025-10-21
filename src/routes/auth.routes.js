@@ -5,12 +5,20 @@ import {
   getProfile,
   logout,
   refreshToken,
-  confirmGoogleLink
+  //confirmGoogleLink,
+  login,
+  signUp
 } from '../controllers/auth.controller.js';
 // use centralized middleware that validates tokenVersion and expiry
 import { authenticateToken } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
+
+//Passport-local routes
+//login
+router.post('/login',login);
+//register
+router.post('/signup',signUp);
 
 // Google OAuth routes
 router.get('/google', googleAuth);
@@ -22,6 +30,6 @@ router.post('/logout', authenticateToken, logout);
 router.post('/refresh', authenticateToken, refreshToken);
 
 // add route to confirm link (no auth required)
-router.post('/confirm-google-link', confirmGoogleLink);
+//router.post('/confirm-google-link', confirmGoogleLink);
 
 export default router;

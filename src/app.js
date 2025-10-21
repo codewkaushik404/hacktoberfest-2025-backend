@@ -43,7 +43,7 @@ app.use('/api/test', testRoutes);
 app.use('/api/test-security', testSecurityRoutes);
 
 // Auth routes with stricter rate limiting
-app.use('/auth', authRateLimit, authRoutes);
+app.use('/api/auth', authRateLimit, authRoutes);
 
 // CORS error handler
 app.use(corsErrorHandler);
