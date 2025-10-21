@@ -32,7 +32,10 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: function() {
+      // Password is required only for local auth users
+      return this.authProvider === 'local';
+    },
   },
   profilePicture: {
     type: String,
@@ -40,9 +43,9 @@ const userSchema = new mongoose.Schema({
   },
   authProvider: {
     type: String,
-    enum: ['google'],
+    enum: ['local', 'google'],
     required: true,
-    default: 'google'
+    default: 'local'
   },
   isActive: {
     type: Boolean,

@@ -148,17 +148,17 @@ export const login = (req,res,next)=>{
         firstName,
         lastName
       },
-      Token: token
+      token: token
     });
   })(req,res,next);
 }
 
 export const signUp = async(req,res,next)=>{
-  const {email, name, firstName, lastName, password}  =req.body;
-  console.log(email,name,firstName,lastName);
+  const {email, name, firstName, lastName, password, authProvider}  =req.body;
   if(!email || !name || !firstName ||!lastName || !password){
     next(new Error("Required Details are missing"));
   }
+
   try{
 
     const user = await User.findOne({
@@ -170,24 +170,31 @@ export const signUp = async(req,res,next)=>{
     }
 
     const hashedPassword = await bcrypt.hash(password,12);
-    const data = {
-      ...req.body,
-      password: hashedPassword
-    }
     
-    await User.create(data);
+    // Whitelist only allowed fields to prevent mass assignment
+    const allowedFields = {
+      email,
+      name,
+      firstName,
+      lastName,
+      password: hashedPassword,
+      authProvider: authProvider || 'local' // default to 'local' if not provided
+    };
+    
+    await User.create(allowedFields);
     res.status(201).json({
       message: "User signed up successfully",
       userDetail: {
-        "UserName": name,
-        "Email-ID": email,
-        "First Name": firstName,
-        "Last Name": lastName
+        userName: name,
+        email: email,
+        firstName: firstName,
+        lastName: lastName
       }
     });
 
   }catch(err){
-    next(err);
+    res.status(500).json({
+      error: err.message,
+      message: "Internal server error during signup"});
   }
- 
 }

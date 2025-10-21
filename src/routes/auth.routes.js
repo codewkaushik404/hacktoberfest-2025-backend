@@ -15,7 +15,7 @@ import { generalRateLimit } from '../middleware/rateLimiter.middleware.js';
 
 const router = express.Router();
 
-// MAX 10 requests from the same IP in a span of 1 Minute
+// MAX 2 requests from the same IP in a span of 1 Minute
 const loginRateLimit = generalRateLimit(2,1);
 
 // MAX 3 requests from the same IP in a span of 1 Hour
