@@ -156,6 +156,7 @@ export const login = (req,res,next)=>{
 export const signUp = async(req,res,next)=>{
   const {email, name, firstName, lastName, password, authProvider}  =req.body;
   if(!email || !name || !firstName ||!lastName || !password){
+    res.statusCode = 400;
     next(new Error("Required Details are missing"));
   }
 
@@ -166,6 +167,7 @@ export const signUp = async(req,res,next)=>{
     });
 
     if(user){
+      res.statusCode = 400;
       throw new Error("User with email or name already exists");
     }
 
@@ -193,6 +195,16 @@ export const signUp = async(req,res,next)=>{
     });
 
   }catch(err){
+
+    if(err.name === "ValidationError"){
+      const errors = Object.values(err.errors).map(e => e.message);
+      return res.status(400).json({
+        name: err.name,
+        message: "Validation Failed",
+        errors
+      });
+    }
+
     res.status(500).json({
       error: err.message,
       message: "Internal server error during signup"});

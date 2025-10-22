@@ -32,9 +32,9 @@ router.get('/google', googleAuth);
 router.get('/google/callback', googleCallback);
 
 // Protected routes (require JWT authentication)
-router.get('/profile', authenticateToken, getProfile);
-router.post('/logout', authenticateToken, logout);
-router.post('/refresh', authenticateToken, refreshToken);
+router.get('/profile', generalRateLimit(60,1), authenticateToken, getProfile);
+router.post('/logout', generalRateLimit(10,1), authenticateToken, logout);
+router.post('/refresh', generalRateLimit(5,1), authenticateToken, refreshToken);
 
 // add route to confirm link (no auth required)
 //router.post('/confirm-google-link', confirmGoogleLink);

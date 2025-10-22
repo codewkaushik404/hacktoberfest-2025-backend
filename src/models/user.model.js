@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
+import { validate } from 'json-schema';
 
 const userSchema = new mongoose.Schema({
   googleId: {
@@ -12,6 +13,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
     lowercase: true,
+    validate: {
+      validator: validateEmail,
+      message: "Invalid email format"
+    },
     trim: true
   },
   name: {
@@ -36,6 +41,10 @@ const userSchema = new mongoose.Schema({
       // Password is required only for local auth users
       return this.authProvider === 'local';
     },
+    validate: {
+      validator: validatePassword,
+      message: 'Password must be at least 8 characters long, include uppercase, lowercase, number, and special character'
+    }
   },
   profilePicture: {
     type: String,
@@ -78,6 +87,17 @@ userSchema.index({ googleId: 1 });
 userSchema.methods.updateLastLogin = function() {
   this.lastLogin = new Date();
   return this.save();
+};
+
+const validateEmail = (email) => {
+  const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  return regex.test(email);
+};
+
+const validatePassword = (password) => {
+  // At least 8 characters, one uppercase, one lowercase, one number, one special character
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return regex.test(password);
 };
 
 // Public representation helper
