@@ -28,7 +28,6 @@ for (const k of requiredEnvs) {
 // JWT secret strength check
 const jwtSecret = process.env.JWT_SECRET || '';
 if (process.env.NODE_ENV !== 'test') {
-  /*
   // require at least 32 bytes (64 hex chars) for HMAC secrets
   if (typeof jwtSecret !== 'string' || jwtSecret.length < 64) {
     const genCmd = `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`;
@@ -37,7 +36,7 @@ if (process.env.NODE_ENV !== 'test') {
   // optional: ensure it's not a default placeholder
   if (/replace_|your_|changeme/i.test(jwtSecret)) {
     throw new Error("JWT_SECRET appears to be a placeholder. Replace it with a secure random value.");
-  }*/
+  }
 
 }
 
