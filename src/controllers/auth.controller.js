@@ -2,7 +2,6 @@ import passport from '../config/passport.config.js';
 import User from '../models/user.model.js';
 import { generateToken } from '../config/passport.config.js';
 import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
 
 // Redirect to Google OAuth (generates a per-request state stored in an httpOnly cookie)
 export const googleAuth = (req, res, next) => {
@@ -170,8 +169,6 @@ export const signUp = async(req,res,next)=>{
       res.statusCode = 400;
       throw new Error("User with email or name already exists");
     }
-
-    const hashedPassword = await bcrypt.hash(password,12);
     
     // Whitelist only allowed fields to prevent mass assignment
     const allowedFields = {
@@ -179,7 +176,7 @@ export const signUp = async(req,res,next)=>{
       name,
       firstName,
       lastName,
-      password: hashedPassword,
+      password,
       authProvider: authProvider || 'local' // default to 'local' if not provided
     };
     

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
-import { validate } from 'json-schema';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   googleId: {
@@ -40,10 +40,6 @@ const userSchema = new mongoose.Schema({
     required: function() {
       // Password is required only for local auth users
       return this.authProvider === 'local';
-    },
-    validate: {
-      validator: validatePassword,
-      message: 'Password must be at least 8 characters long, include uppercase, lowercase, number, and special character'
     }
   },
   profilePicture: {
@@ -89,15 +85,24 @@ userSchema.methods.updateLastLogin = function() {
   return this.save();
 };
 
-const validateEmail = (email) => {
-  const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-  return regex.test(email);
+function validateEmail(email){
+  try{
+    const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    return regex.test(email);
+  }catch{
+    return false;
+  }
 };
 
-const validatePassword = (password) => {
-  // At least 8 characters, one uppercase, one lowercase, one number, one special character
-  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  return regex.test(password);
+function validatePassword(password){
+  try{
+      // At least 8 characters, one uppercase, one lowercase, one number, one special character
+      if(!password) return true;
+      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      return regex.test(password);
+  }catch{
+      return false;
+  }
 };
 
 // Public representation helper
@@ -188,6 +193,20 @@ userSchema.statics.incrementTokenVersion = async function(userId) {
   if (!userId) return null;
   return this.findByIdAndUpdate(userId, { $inc: { tokenVersion: 1 } }, { new: true }).lean();
 };
+
+// Pre-save hook to validate and hash password
+userSchema.pre('save', async function(next) {
+  if (this.isModified('password') && this.password) {
+    // Validate plain password first
+    if (!validatePassword(this.password)) {
+      return next(new Error('Password must be at least 8 characters long, include uppercase, lowercase, number, and special character'));
+    }
+    // Hash password after validation
+    this.password = await bcrypt.hash(this.password, 12);
+  }
+  next();
+});
+
 
 const User = mongoose.model('User', userSchema);
 
