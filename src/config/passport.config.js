@@ -41,7 +41,6 @@ if (process.env.NODE_ENV !== 'test') {
 
 }
 
-
 // NOTE: enable passReqToCallback so controller can verify state cookie if needed
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
